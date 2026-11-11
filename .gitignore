@@ -1,0 +1,22 @@
+# Private inputs and generated conversion results stay outside Git.
+*.xml
+*.zip
+*.json
+*.jsonl
+*.ndjson
+*.csv
+*.sqlite*
+*.db
+*.pem
+*.key
+.env
+*.env
+.env.*
+.venv/
+__pycache__/
+*.py[cod]
+.staging/
+*.log
+.DS_Store
+.local/
+/research/

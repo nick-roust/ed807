@@ -1,0 +1,68 @@
+name: Public synthetic tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PIP_NO_CACHE_DIR: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      # Official actions/checkout v5.1.0 release commit; API ref checked 2026-11-11.
+      # https://github.com/actions/checkout/commit/fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          submodules: false
+          lfs: false
+      # Official actions/setup-python v6.3.0 release commit; API ref checked 2026-11-11.
+      # https://github.com/actions/setup-python/commit/ece7cb06caefa5fff74198d8649806c4678c61a1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14.10'
+          architecture: x64
+          freethreaded: false
+          allow-prereleases: false
+          check-latest: false
+      - name: Verify exact runtime and create isolated environment
+        shell: bash
+        run: |
+          python .github/scripts/ci.py runtime
+          python -m venv "$RUNNER_TEMP/ed807-venv"
+          "$RUNNER_TEMP/ed807-venv/bin/python" .github/scripts/ci.py runtime
+      - name: Download and verify the approved wheel
+        shell: bash
+        run: |
+          mkdir -m 700 "$RUNNER_TEMP/ed807-wheels"
+          "$RUNNER_TEMP/ed807-venv/bin/python" -m pip --isolated download \
+            --index-url https://pypi.org/simple --no-cache-dir \
+            --only-binary=:all: --require-hashes --no-deps \
+            -r converter/requirements.lock --dest "$RUNNER_TEMP/ed807-wheels"
+          "$RUNNER_TEMP/ed807-venv/bin/python" .github/scripts/ci.py wheel
+      - name: Install pinned dependencies and record native versions
+        shell: bash
+        run: |
+          "$RUNNER_TEMP/ed807-venv/bin/python" -m pip --isolated install \
+            --no-index --find-links "$RUNNER_TEMP/ed807-wheels" --no-cache-dir \
+            --only-binary=:all: --require-hashes --no-deps -r converter/requirements.lock
+          "$RUNNER_TEMP/ed807-venv/bin/python" .github/scripts/ci.py dependencies
+      - name: Acquire and fingerprint the official schema
+        shell: bash
+        run: '"$RUNNER_TEMP/ed807-venv/bin/python" .github/scripts/ci.py schema'
+      - name: Run unittest discovery with structured coverage gate
+        working-directory: converter
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          unset BIC_SOURCE_XML
+          "$RUNNER_TEMP/ed807-venv/bin/python" ../.github/scripts/ci.py tests
