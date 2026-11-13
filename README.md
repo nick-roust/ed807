@@ -88,7 +88,15 @@ Staging must be owned by the current user, have no group/other permission bits a
 
 ## Limitations
 
-Only the implemented single-message FIRR profile and pinned XSD release are supported. SIRR, multipart, unsupported historical profiles, automatic updates and dataset publication are outside scope. Official schemas and banking data are not bundled. Diagnostics are partly Russian. This is an early source release candidate; public release and native security acceptance remain pending.
+Only the implemented single-message FIRR profile and pinned XSD release are supported. SIRR, multipart, unsupported historical profiles, automatic updates and dataset publication are outside scope. Official schemas and banking data are not bundled. Diagnostics are partly Russian.
+
+ED807 Converter v0.1.0 is publicly available as an independent, source-only open-source project under the MIT License.
+
+The supported runtime is CPython 3.14.10 (non-FIPS) with lxml 6.1.3 on Linux x86_64.
+
+The project has passed its public CI qualification. Known residual native-library security risks remain documented in the [runtime security guide](converter/docs/runtime-security.md). These risks have not been eliminated, and the supported execution model remains limited to the offline CLI.
+
+No standalone GitHub Release, binary distribution, or PyPI package has been published.
 
 ## License
 
